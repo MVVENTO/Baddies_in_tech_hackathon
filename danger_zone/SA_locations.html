@@ -1,0 +1,200 @@
+<!-- Data-> https://www.kaggle.com/datasets/thaddeussegura/nypd-arrest-data-20062019
+https://developers.arcgis.com/javascript/latest/sample-code/widgets-basemapgallery/? 
+https://www.mapbox.com/mapgpt
+-->
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Track widget simulation | Sample | ArcGIS Maps SDK for JavaScript 4.29</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
+
+    <script>
+      var dojoConfig = {
+        packages: [
+          {
+            name: "geolocate",
+            location: "https://2gis.github.io/mock-geolocation/dist",
+            main: "geolocate"
+          }
+        ]
+      };
+    </script>
+
+    <script src="https://js.arcgis.com/4.29/"></script>
+
+    <script>
+      require([
+        "geolocate", // geolocation simulator (https://github.com/2gis/mock-geolocation)
+        "esri/widgets/Track",
+        "esri/views/SceneView",
+        "esri/Map"
+      ], (geolocate, Track, SceneView, Map) => {
+        // geolocation simulator
+        stubGeolocation();
+
+        const map = new Map({
+          basemap: "topo-vector"
+        });
+
+        const view = new SceneView({
+          map: map,
+          container: "viewDiv",
+          center: [-74.0060, 40.7128],
+          zoom: 18,
+          ui: {
+            components: ["attribution"] // replace default set of UI components
+          }
+        });
+
+        const track = new Track({
+          view: view,
+          goToLocationEnabled: false // disable this since we want to control what happens after our location is acquired
+        });
+        view.ui.add(track, "top-left");
+
+        view.when(() => {
+          let prevLocation = view.center;
+
+          track.on("track", () => {
+            const location = track.graphic.geometry;
+
+            view.goTo({
+              center: location,
+              tilt: 50,
+              scale: 2500,
+              heading: 360 - getHeading(location, prevLocation),  // only applies to SceneView
+              rotation: 360 - getHeading(location, prevLocation) // only applies to MapView
+            }).catch((error) => {
+              if (error.name != "AbortError"){
+                console.error(error);
+              }
+            });
+
+            prevLocation = location.clone();
+          });
+
+          track.start();
+        });
+
+        function getHeading(point, oldPoint) {
+          // get angle between two points
+          const angleInDegrees = (Math.atan2(point.y - oldPoint.y, point.x - oldPoint.x) * 180) / Math.PI;
+
+          // move heading north
+          return -90 + angleInDegrees;
+        }
+
+        // geolocation simulator
+        function stubGeolocation() {
+          let coords = [
+              {
+                lat: 40.7128,
+                lng: -74.0060
+              },
+              {
+                lng: -74.0060,
+                lat: 40.7128
+              },
+              {
+                lng: -74.0060,
+                lat: 40.7128
+              },
+              {
+                lng: -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng: -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+             
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng: -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng: -73.87963014799993,
+                lat:40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat:40.86905853200005
+              },
+              {
+                lat: 40.86905853200005,
+                lng:  -73.87963014799993
+              },
+              {
+                lng: -73.87963014799993,
+                lat: 40.86905853200005
+              },
+              {
+                lng:  -73.87963014799993,
+                lat: 40.86905853200005
+              }
+            ],
+            currentCoordIndex = 0;
+
+          geolocate.use();
+
+          setInterval(() => {
+            geolocate.change(coords[currentCoordIndex]);
+            currentCoordIndex = (currentCoordIndex + 1) % coords.length;
+          }, 1500);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
